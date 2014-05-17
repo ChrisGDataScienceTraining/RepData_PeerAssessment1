@@ -2,14 +2,45 @@
 
 
 ## Loading and preprocessing the data
+```{r echo=TRUE}
+library(reshape2)
+
+unzip("activity.zip")
+activity=read.csv("activity.csv")
+summary(activity)
+by_days_steps_list=lapply(split(activity,activity$date),  
+                           function (x) sum(x[,c(1)])
+                          )
+#convert list of dataframes into a dataframe
+by_days_steps_df = melt(by_days_steps_list)
+names(by_days_steps_df)=c("Steps","Date")
+```
 
 
 
 ## What is mean total number of steps taken per day?
+```{r}
 
+by_days_steps_df$Date = as.POSIXct(by_days_steps_df$Date,  format="%Y-%m-%d")
+r=as.POSIXct(round(range(by_days_steps_df$Date),"hours"))
+plot(by_days_steps_df$Date, by_days_steps_df$Steps, type="h", xaxt="n")
+axis.POSIXct(side=1, at=seq(r[1], r[2], by="day"), format="%Y-%m-%d")
+summary(by_days_steps_df$Steps)
+```
 
+The mean total number of steps taken per day is `r mean(by_days_steps_df$Steps, na.rm=TRUE)`.   
+Median is `r median(by_days_steps_df$Steps, na.rm=TRUE)`
 
 ## What is the average daily activity pattern?
+```{r}
+ activity$date = as.POSIXct(paste(activity$date, sprintf("%04d", activity$interval)),  format="%Y-%m-%d %H%M")
+r=as.POSIXct(round(range(activity$date),"hours"))
+plot(activity$date, activity$steps, type="l", xaxt="n")
+axis.POSIXct(side=1, at=seq(r[1], r[2], by="day"), format="%Y-%m-%d")
+
+```
+
+
 
 
 
