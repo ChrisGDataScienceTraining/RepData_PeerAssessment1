@@ -1,9 +1,12 @@
 # Reproducible Research: Peer Assessment 1
 
 
+
 ## Loading and preprocessing the data
 ```{r echo=TRUE}
 library(reshape2)
+library(timeDate)
+library(lattice)
 
 unzip("activity.zip")
 activity=read.csv("activity.csv")
@@ -20,11 +23,15 @@ names(by_days_steps_df)=c("Steps","Date")
 
 ## What is mean total number of steps taken per day?
 ```{r}
+hist( by_days_steps_df$Steps, breaks=40)
 
-by_days_steps_df$Date = as.POSIXct(by_days_steps_df$Date,  format="%Y-%m-%d")
-r=as.POSIXct(round(range(by_days_steps_df$Date),"hours"))
-plot(by_days_steps_df$Date, by_days_steps_df$Steps, type="h", xaxt="n")
-axis.POSIXct(side=1, at=seq(r[1], r[2], by="day"), format="%Y-%m-%d")
+```
+
+```{r fig.width=17, fig.height=6}
+activity$date = as.POSIXct(paste(activity$date, sprintf("%04d", activity$interval)),  format="%Y-%m-%d %H%M")
+r=as.POSIXct(round(range(activity$date),"hours"))
+plot(as.POSIXct(by_days_steps_df$Date), by_days_steps_df$Steps,type="h",xaxt="n", xlab="", ylab="Steps")
+axis.POSIXct(side=1, at=seq(r[1], r[2], by="day"), format="%Y-%m-%d", las=2)
 summary(by_days_steps_df$Steps)
 ```
 
@@ -33,19 +40,103 @@ Median is `r median(by_days_steps_df$Steps, na.rm=TRUE)`
 
 ## What is the average daily activity pattern?
 ```{r}
- activity$date = as.POSIXct(paste(activity$date, sprintf("%04d", activity$interval)),  format="%Y-%m-%d %H%M")
-r=as.POSIXct(round(range(activity$date),"hours"))
-plot(activity$date, activity$steps, type="l", xaxt="n")
-axis.POSIXct(side=1, at=seq(r[1], r[2], by="day"), format="%Y-%m-%d")
 
+by_interval_avg_steps_list=lapply(split(activity,activity$interval ),  
+                           function (x) mean(x[,c(1)], na.rm=TRUE) )
+                          
+#convert list of dataframes into a dataframe
+by_interval_avg_steps_list_df = melt(by_interval_avg_steps_list)
+names(by_interval_avg_steps_list_df)=c("Steps","Interval")
+
+plot(by_interval_avg_steps_list_df$Interval, by_interval_avg_steps_list_df$Steps, type="l")
 ```
 
 
-
+The 5-minute pattern that contains the max number of steps on average across all the days in the data set is `r by_interval_avg_steps_list_df[by_interval_avg_steps_list_df$Steps==max(by_interval_avg_steps_list_df$Steps), 2] `
 
 
 ## Imputing missing values
+Number of missing entries (for step column) is `r sum(is.na(activity$steps))`  
 
+```{r}
+#use the mean of 5 minute interval to replace missing data in steps columns
+activity=read.csv("activity.csv")
+by_interval_split_list = lapply(split(activity,activity$interval ),
+        function (x)   { 
+          x$steps[is.na(x$steps)] <- mean(x[,c(1)], na.rm=TRUE) 
+          x
+          } 
+          )   
+full_activity= unsplit(by_interval_split_list, f=activity$interval) 
+summary(full_activity)
 
+```
+
+```{r}
+# a histogram of the total number of steps taken each day
+by_days_steps_list=lapply(split(full_activity,full_activity$date),  
+                           function (x) sum(x[,c(1)])
+                          )
+#convert list of dataframes into a dataframe
+by_days_steps_df = melt(by_days_steps_list)
+names(by_days_steps_df)=c("Steps","Date")
+
+hist( by_days_steps_df$Steps, breaks=40)
+```
+```{r  fig.width=17, fig.height=6}
+full_activity$date = as.POSIXct(paste(full_activity$date, sprintf("%04d", full_activity$interval)),  format="%Y-%m-%d %H%M")
+r=as.POSIXct(round(range(full_activity$date),"hours"))
+plot(as.POSIXct(by_days_steps_df$Date), by_days_steps_df$Steps,type="h",xaxt="n", xlab="", ylab="Steps")
+axis.POSIXct(side=1, at=seq(r[1], r[2], by="day"), format="%Y-%m-%d", las=2)
+summary(by_days_steps_df$Steps)
+```
+The mean total number of steps taken per day is `r mean(by_days_steps_df$Steps, na.rm=TRUE)`.   
+Median is `r median(by_days_steps_df$Steps, na.rm=TRUE)`
+No diffrenece comparing to a raw dataset with NAs.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+#find weekdays/weekends
+#full_activity$day=isWeekday(full_activity$date)
+#full_activity$day[full_activity$day==TRUE] = "Weekday"
+#full_activity$day[full_activity$day==FALSE] = "Weekend"
+#full_activity$day=factor(full_activity$day)
+
+#better code
+full_activity$day=factor(ifelse(isWeekday(full_activity$date),"Weekday", "Weekend"))
+by_daytype_full_activity_list=split(full_activity, full_activity$day)
+# by_interval_avg_steps_list=c(lapply(split(by_daytype_full_activity_list[["Weekday"]],by_daytype_full_activity_list[["Weekday"]]$interval ),  
+#                            function (x) list(Steps=mean(x[,c(1)], na.rm=TRUE), Day="Weekday")
+#                            ),
+#                            lapply(split(by_daytype_full_activity_list[["Weekend"]],by_daytype_full_activity_list[["Weekend"]]$interval ),  
+#                            function (x) list(mean(x[,c(1)], na.rm=TRUE), "Weekend")
+#                            ) )
+
+by_interval_avg_steps_weekday_list=lapply(split(by_daytype_full_activity_list[["Weekday"]],by_daytype_full_activity_list[["Weekday"]]$interval ),  
+                           function (x) list(Steps=mean(x[,c(1)], na.rm=TRUE), Day="Weekday")
+                           )
+                          
+by_interval_avg_steps_weekend_list=lapply(split(by_daytype_full_activity_list[["Weekend"]],by_daytype_full_activity_list[["Weekend"]]$interval ),  
+                           function (x) list(Steps=mean(x[,c(1)], na.rm=TRUE), Day="Weekend")
+                           )
+
+#convert list into a dataframe
+by_interval_avg_steps_df = do.call(rbind.data.frame,by_interval_avg_steps_weekday_list)
+by_interval_avg_steps_df$Interval=rownames(by_interval_avg_steps_df)
+by_interval_avg_steps_df$Interval=as.numeric(by_interval_avg_steps_df$Interval)
+
+by_interval_avg_steps_weekend_df = do.call(rbind.data.frame,by_interval_avg_steps_weekend_list)
+by_interval_avg_steps_weekend_df$Interval=rownames(by_interval_avg_steps_weekend_df)
+by_interval_avg_steps_weekend_df$Interval=as.numeric(by_interval_avg_steps_weekend_df$Interval)
+
+by_interval_avg_steps_df=rbind(by_interval_avg_steps_df, by_interval_avg_steps_weekend_df)
+
+#plot(by_interval_avg_steps_df$Steps ,by_interval_avg_steps_df$Interval, type="l")
+xyplot(by_interval_avg_steps_df$Steps ~ by_interval_avg_steps_df$Interval|by_interval_avg_steps_df$Day, data=by_interval_avg_steps_df, layout=c(1,2), type="l")
+
+#xyplot(full_activity$steps ~ full_activity$date|full_activity$day, data=full_activity, layout=c(1,2), type="l")
+
+
+
+```
+
