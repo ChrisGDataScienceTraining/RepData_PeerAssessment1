@@ -22,12 +22,12 @@ names(by_days_steps_df)=c("Steps","Date")
 
 
 ## What is mean total number of steps taken per day?
-```{r}
+```{r echo=TRUE}
 hist( by_days_steps_df$Steps, breaks=40)
 
 ```
 
-```{r fig.width=17, fig.height=6}
+```{r fig.width=17, fig.height=6 echo=TRUE}
 activity$date = as.POSIXct(paste(activity$date, sprintf("%04d", activity$interval)),  format="%Y-%m-%d %H%M")
 r=as.POSIXct(round(range(activity$date),"hours"))
 plot(as.POSIXct(by_days_steps_df$Date), by_days_steps_df$Steps,type="h",xaxt="n", xlab="", ylab="Steps")
@@ -39,7 +39,7 @@ The mean total number of steps taken per day is `r mean(by_days_steps_df$Steps, 
 Median is `r median(by_days_steps_df$Steps, na.rm=TRUE)`
 
 ## What is the average daily activity pattern?
-```{r}
+```{r echo=TRUE}
 
 by_interval_avg_steps_list=lapply(split(activity,activity$interval ),  
                            function (x) mean(x[,c(1)], na.rm=TRUE) )
@@ -58,7 +58,7 @@ The 5-minute pattern that contains the max number of steps on average across all
 ## Imputing missing values
 Number of missing entries (for step column) is `r sum(is.na(activity$steps))`  
 
-```{r}
+```{r echo=TRUE}
 #use the mean of 5 minute interval to replace missing data in steps columns
 activity=read.csv("activity.csv")
 by_interval_split_list = lapply(split(activity,activity$interval ),
@@ -72,7 +72,7 @@ summary(full_activity)
 
 ```
 
-```{r}
+```{r echo=TRUE}
 # a histogram of the total number of steps taken each day
 by_days_steps_list=lapply(split(full_activity,full_activity$date),  
                            function (x) sum(x[,c(1)])
@@ -83,7 +83,7 @@ names(by_days_steps_df)=c("Steps","Date")
 
 hist( by_days_steps_df$Steps, breaks=40)
 ```
-```{r  fig.width=17, fig.height=6}
+```{r echo=TRUE fig.width=17, fig.height=6}
 full_activity$date = as.POSIXct(paste(full_activity$date, sprintf("%04d", full_activity$interval)),  format="%Y-%m-%d %H%M")
 r=as.POSIXct(round(range(full_activity$date),"hours"))
 plot(as.POSIXct(by_days_steps_df$Date), by_days_steps_df$Steps,type="h",xaxt="n", xlab="", ylab="Steps")
@@ -95,7 +95,7 @@ Median is `r median(by_days_steps_df$Steps, na.rm=TRUE)`
 No diffrenece comparing to a raw dataset with NAs.
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+```{r echo=TRUE}
 #find weekdays/weekends
 #full_activity$day=isWeekday(full_activity$date)
 #full_activity$day[full_activity$day==TRUE] = "Weekday"
