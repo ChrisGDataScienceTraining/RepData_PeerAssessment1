@@ -8,6 +8,10 @@ library(reshape2)
 library(timeDate)
 library(lattice)
 
+fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+savedFile <- "activity.zip"
+download.file(fileUrl, destfile = savedFile, method="curl")
+
 unzip("activity.zip")
 activity=read.csv("activity.csv")
 summary(activity)
@@ -27,7 +31,7 @@ hist( by_days_steps_df$Steps, breaks=40)
 
 ```
 
-```{r fig.width=17, fig.height=6 echo=TRUE}
+```{r fig.width=17, fig.height=6, echo=TRUE}
 activity$date = as.POSIXct(paste(activity$date, sprintf("%04d", activity$interval)),  format="%Y-%m-%d %H%M")
 r=as.POSIXct(round(range(activity$date),"hours"))
 plot(as.POSIXct(by_days_steps_df$Date), by_days_steps_df$Steps,type="h",xaxt="n", xlab="", ylab="Steps")
@@ -83,7 +87,7 @@ names(by_days_steps_df)=c("Steps","Date")
 
 hist( by_days_steps_df$Steps, breaks=40)
 ```
-```{r echo=TRUE fig.width=17, fig.height=6}
+```{r echo=TRUE, fig.width=17, fig.height=6}
 full_activity$date = as.POSIXct(paste(full_activity$date, sprintf("%04d", full_activity$interval)),  format="%Y-%m-%d %H%M")
 r=as.POSIXct(round(range(full_activity$date),"hours"))
 plot(as.POSIXct(by_days_steps_df$Date), by_days_steps_df$Steps,type="h",xaxt="n", xlab="", ylab="Steps")
